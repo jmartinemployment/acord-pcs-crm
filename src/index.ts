@@ -261,12 +261,13 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     return;
   }
 
-  // Default error
+  // Default error - temporarily show details for debugging
   res.status(500).json({
     success: false,
     error: {
       code: 'INTERNAL_ERROR',
-      message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred',
+      message: err.message,
+      name: err.name,
     },
   });
 });
