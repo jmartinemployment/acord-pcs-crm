@@ -1,0 +1,16 @@
+# Routes - Express route handlers
+#
+# Files to create:
+# - auth.ts
+# - parties.ts
+# - policies.ts
+# - claims.ts
+# - vehicles.ts
+# - properties.ts
+# - bonds.ts
+# - activities.ts
+# - leads.ts
+# - dashboard.ts
+# - attachments.ts
+# - acord.ts
+# - auditLogs.ts

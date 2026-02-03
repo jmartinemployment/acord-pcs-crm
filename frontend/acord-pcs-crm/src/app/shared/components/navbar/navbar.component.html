@@ -1,0 +1,11 @@
+<header class="navbar bg-white border-bottom px-4 py-2">
+  <div class="d-flex align-items-center">
+    <h4 class="mb-0">{{ title }}</h4>
+    @if (subtitle) {
+      <span class="text-muted ms-2">{{ subtitle }}</span>
+    }
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <ng-content></ng-content>
+  </div>
+</header>

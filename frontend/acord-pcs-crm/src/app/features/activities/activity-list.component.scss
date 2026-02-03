@@ -1,0 +1,27 @@
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  color: #6c757d;
+}
+
+.list-group-item {
+  border-left-width: 3px;
+
+  &.border-danger {
+    border-left-color: #dc3545;
+  }
+
+  &.border-warning {
+    border-left-color: #ffc107;
+  }
+}

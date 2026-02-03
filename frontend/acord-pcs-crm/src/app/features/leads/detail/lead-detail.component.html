@@ -1,0 +1,228 @@
+<app-navbar [title]="displayName || 'New Lead'" subtitle="Lead Details">
+  <a routerLink="/leads" class="btn btn-outline-secondary me-2">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+  @if (lead()) {
+    <button class="btn btn-primary">
+      <i class="bi bi-pencil me-1"></i> Edit
+    </button>
+  }
+</app-navbar>
+
+<div class="container-fluid px-4">
+  @if (loading()) {
+    <app-loading message="Loading lead details..." />
+  } @else if (error()) {
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error() }}
+    </div>
+  } @else if (lead()) {
+    <div class="row">
+      <!-- Main Info -->
+      <div class="col-lg-8">
+        <!-- Lead Overview -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-person-plus me-2"></i>
+              Lead Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              @if (lead()!.companyName) {
+                <div class="col-md-6">
+                  <label class="form-label text-muted small">Company Name</label>
+                  <p class="mb-0 fw-bold fs-5">{{ lead()!.companyName }}</p>
+                </div>
+              }
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Contact Name</label>
+                <p class="mb-0 fw-medium">{{ lead()!.firstName }} {{ lead()!.lastName }}</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Status</label>
+                <p class="mb-0">
+                  <span class="badge" [ngClass]="getStatusClass(lead()!.leadStatus)">
+                    {{ lead()!.leadStatus }}
+                  </span>
+                </p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Source</label>
+                <p class="mb-0">{{ lead()!.leadSource || '—' }}</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Days in Pipeline</label>
+                <p class="mb-0">{{ daysSinceCreated }} days</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-telephone me-2"></i>
+              Contact Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Email</label>
+                <p class="mb-0">
+                  <i class="bi bi-envelope me-2"></i>
+                  @if (lead()!.email) {
+                    <a [href]="'mailto:' + lead()!.email">{{ lead()!.email }}</a>
+                  } @else {
+                    —
+                  }
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Phone</label>
+                <p class="mb-0">
+                  <i class="bi bi-telephone me-2"></i>
+                  {{ lead()!.phone || '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interested Lines & Notes -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-card-checklist me-2"></i>
+              Insurance Interests
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label text-muted small">Interested Lines of Business</label>
+              <p class="mb-0">
+                @if (lead()!.interestedLines && lead()!.interestedLines!.length > 0) {
+                  @for (line of lead()!.interestedLines; track line) {
+                    <span class="badge bg-primary me-1 mb-1">{{ line }}</span>
+                  }
+                } @else {
+                  <span class="text-muted">Not specified</span>
+                }
+              </p>
+            </div>
+            @if (lead()!.notes) {
+              <div>
+                <label class="form-label text-muted small">Notes</label>
+                <p class="mb-0">{{ lead()!.notes }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Financial -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-currency-dollar me-2"></i>
+              Estimated Value
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center">
+              <span class="fs-2 fw-bold text-success">
+                {{ lead()!.estimatedPremium | currency }}
+              </span>
+              <p class="text-muted mb-0">Estimated Annual Premium</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-clock-history me-2"></i>
+              Timeline
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Lead Date</span>
+              <span>{{ lead()!.leadDate | date }}</span>
+            </div>
+            @if (lead()!.contactedDate) {
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Contacted</span>
+                <span>{{ lead()!.contactedDate | date }}</span>
+              </div>
+            }
+            @if (lead()!.quotedDate) {
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Quoted</span>
+                <span>{{ lead()!.quotedDate | date }}</span>
+              </div>
+            }
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Assigned To</span>
+              <span>{{ lead()!.assignedTo || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-lightning me-2"></i>
+              Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              @if (lead()!.leadStatus === 'NEW') {
+                <button class="btn btn-primary">
+                  <i class="bi bi-telephone me-1"></i> Mark as Contacted
+                </button>
+              }
+              @if (lead()!.leadStatus === 'CONTACTED') {
+                <button class="btn btn-warning">
+                  <i class="bi bi-check-circle me-1"></i> Mark as Qualified
+                </button>
+              }
+              @if (lead()!.leadStatus === 'QUALIFIED') {
+                <button class="btn btn-purple">
+                  <i class="bi bi-file-text me-1"></i> Create Quote
+                </button>
+              }
+              @if (lead()!.leadStatus === 'QUOTED') {
+                <button class="btn btn-success">
+                  <i class="bi bi-trophy me-1"></i> Mark as Won
+                </button>
+              }
+              <button class="btn btn-outline-secondary">
+                <i class="bi bi-calendar-plus me-1"></i> Schedule Follow-up
+              </button>
+              @if (lead()!.leadStatus !== 'WON' && lead()!.leadStatus !== 'LOST') {
+                <button class="btn btn-outline-danger">
+                  <i class="bi bi-x-circle me-1"></i> Mark as Lost
+                </button>
+              }
+              @if (lead()!.leadStatus === 'WON') {
+                <button class="btn btn-success">
+                  <i class="bi bi-person-plus me-1"></i> Convert to Customer
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

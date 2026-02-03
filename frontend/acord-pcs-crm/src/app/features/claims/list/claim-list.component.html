@@ -1,0 +1,94 @@
+<app-navbar title="Claims" subtitle="Manage insurance claims">
+  <a routerLink="/claims/new" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> New Claim
+  </a>
+</app-navbar>
+
+<div class="container-fluid px-4">
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-warning bg-opacity-10 border-warning">
+        <div class="card-body text-center">
+          <h3 class="text-warning mb-0">{{ openClaimsCount }}</h3>
+          <small class="text-muted">Open Claims</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info bg-opacity-10 border-info">
+        <div class="card-body text-center">
+          <h3 class="text-info mb-0">{{ totalReserves | currency }}</h3>
+          <small class="text-muted">Total Reserves</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success bg-opacity-10 border-success">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-0">{{ totalPaid | currency }}</h3>
+          <small class="text-muted">Total Paid</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-secondary bg-opacity-10">
+        <div class="card-body text-center">
+          <h3 class="mb-0">{{ claims().length }}</h3>
+          <small class="text-muted">Total Claims</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by claim or policy number..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select
+            class="form-select"
+            [ngModel]="filterStatus()"
+            (ngModelChange)="filterStatus.set($event)">
+            <option value="">All Statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="UNDER_REVIEW">Under Review</option>
+            <option value="APPROVED">Approved</option>
+            <option value="DENIED">Denied</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </div>
+        <div class="col-md-4 text-end">
+          <span class="text-muted">
+            {{ filteredClaims.length }} claims
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="card">
+    <div class="card-body p-0">
+      <app-data-table
+        [columns]="columns"
+        [data]="filteredClaims"
+        [loading]="loading()"
+        emptyMessage="No claims found" />
+    </div>
+  </div>
+</div>

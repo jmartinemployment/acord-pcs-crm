@@ -1,0 +1,13 @@
+# Services - Business logic layer
+#
+# Files to create:
+# - party.service.ts
+# - policy.service.ts
+# - claim.service.ts
+# - vehicle.service.ts
+# - property.service.ts
+# - bond.service.ts
+# - activity.service.ts
+# - lead.service.ts
+# - acord.service.ts (XML import/export)
+# - email.service.ts

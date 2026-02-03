@@ -1,0 +1,7 @@
+# Frontend - Angular 21 workspace
+#
+# To create Angular frontend:
+# ng new frontend --standalone --style=scss --routing
+#
+# Or create inside this directory with:
+# cd frontend && ng new . --standalone --style=scss --routing

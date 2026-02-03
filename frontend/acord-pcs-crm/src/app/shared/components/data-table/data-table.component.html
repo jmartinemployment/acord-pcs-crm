@@ -1,0 +1,47 @@
+<div class="table-responsive">
+  @if (loading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  } @else if (data.length === 0) {
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+      {{ emptyMessage }}
+    </div>
+  } @else {
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          @for (col of columns; track col.key) {
+            <th>{{ col.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of data; track row.id) {
+          <tr
+            [class.cursor-pointer]="rowLink || rowClick.observed"
+            (click)="onRowClick(row)">
+            @for (col of columns; track col.key) {
+              <td>
+                @if (col.type === 'link' && col.linkPrefix) {
+                  <a [routerLink]="[col.linkPrefix, row.id]" class="text-decoration-none">
+                    {{ formatValue(row, col) }}
+                  </a>
+                } @else if (col.type === 'badge') {
+                  <span class="badge" [ngClass]="getBadgeClass(getValue(row, col.key), col)">
+                    {{ formatValue(row, col) }}
+                  </span>
+                } @else {
+                  {{ formatValue(row, col) }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

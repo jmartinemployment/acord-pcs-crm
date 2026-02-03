@@ -1,0 +1,12 @@
+# Models - Zod validation schemas
+#
+# Files to create:
+# - party.schema.ts
+# - policy.schema.ts
+# - claim.schema.ts
+# - vehicle.schema.ts
+# - property.schema.ts
+# - bond.schema.ts
+# - activity.schema.ts
+# - lead.schema.ts
+# - auth.schema.ts

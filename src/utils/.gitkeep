@@ -1,0 +1,7 @@
+# Utils - Utility functions and helpers
+#
+# Files to create:
+# - prisma.ts (Prisma client singleton)
+# - helpers.ts
+# - errors.ts
+# - pagination.ts

@@ -1,0 +1,232 @@
+<app-navbar [title]="bond()?.bondNumber || 'New Bond'" subtitle="Bond Details">
+  <a routerLink="/bonds" class="btn btn-outline-secondary me-2">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+  @if (bond()) {
+    <button class="btn btn-primary">
+      <i class="bi bi-pencil me-1"></i> Edit
+    </button>
+  }
+</app-navbar>
+
+<div class="container-fluid px-4">
+  @if (loading()) {
+    <app-loading message="Loading bond details..." />
+  } @else if (error()) {
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error() }}
+    </div>
+  } @else if (bond()) {
+    <div class="row">
+      <!-- Main Info -->
+      <div class="col-lg-8">
+        <!-- Bond Overview -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-shield-check me-2"></i>
+              Bond Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Bond Number</label>
+                <p class="mb-0 fw-bold fs-5">{{ bond()!.bondNumber }}</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Bond Type</label>
+                <p class="mb-0">
+                  <span class="badge" [ngClass]="getTypeClass(bond()!.bondType)">
+                    {{ bond()!.bondType }}
+                  </span>
+                  @if (bond()!.bondSubType) {
+                    <span class="badge bg-light text-dark ms-1">{{ bond()!.bondSubType }}</span>
+                  }
+                </p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Status</label>
+                <p class="mb-0">
+                  <span class="badge" [ngClass]="getStatusClass(bond()!.bondStatus)">
+                    {{ bond()!.bondStatus }}
+                  </span>
+                </p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Effective Date</label>
+                <p class="mb-0">{{ bond()!.effectiveDate | date }}</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Expiration Date</label>
+                <p class="mb-0">{{ bond()!.expirationDate ? (bond()!.expirationDate | date) : 'Continuous' }}</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small">Surety Carrier</label>
+                <p class="mb-0">{{ bond()!.suretyCarrier || '—' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Details (for contract bonds) -->
+        @if (bond()!.bondType === 'CONTRACT' && (bond()!.projectName || bond()!.contractDescription)) {
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">
+                <i class="bi bi-building me-2"></i>
+                Project Details
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                @if (bond()!.projectName) {
+                  <div class="col-md-8">
+                    <label class="form-label text-muted small">Project Name</label>
+                    <p class="mb-0 fw-medium">{{ bond()!.projectName }}</p>
+                  </div>
+                }
+                <div class="col-md-4">
+                  <label class="form-label text-muted small">Location</label>
+                  <p class="mb-0">
+                    <i class="bi bi-geo-alt me-1"></i>
+                    {{ projectLocation }}
+                  </p>
+                </div>
+                @if (bond()!.contractDescription) {
+                  <div class="col-12">
+                    <label class="form-label text-muted small">Contract Description</label>
+                    <p class="mb-0">{{ bond()!.contractDescription }}</p>
+                  </div>
+                }
+                @if (bond()!.contractAmount) {
+                  <div class="col-md-4">
+                    <label class="form-label text-muted small">Contract Amount</label>
+                    <p class="mb-0 fs-5 fw-bold text-primary">{{ bond()!.contractAmount | currency }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Involved Parties -->
+        @if (bond()!.parties && bond()!.parties!.length > 0) {
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="card-title mb-0">
+                <i class="bi bi-people me-2"></i>
+                Involved Parties
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (bp of bond()!.parties; track bp.id) {
+                    <tr>
+                      <td>
+                        @if (bp.party) {
+                          <a [routerLink]="['/parties', bp.partyId]" class="text-decoration-none">
+                            {{ bp.party.partyType === 'PERSON'
+                              ? bp.party.firstName + ' ' + bp.party.lastName
+                              : bp.party.commercialName }}
+                          </a>
+                        } @else {
+                          Party ID: {{ bp.partyId }}
+                        }
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary">{{ bp.role }}</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Financial Summary -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-currency-dollar me-2"></i>
+              Financial
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center mb-3">
+              <span class="fs-2 fw-bold text-primary">
+                {{ bond()!.penaltyAmount | currency }}
+              </span>
+              <p class="text-muted mb-0">Penalty Amount</p>
+            </div>
+            @if (bond()!.premiumAmount) {
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Premium</span>
+                <span class="fw-bold">{{ bond()!.premiumAmount | currency }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Expiration Alert -->
+        @if (bond()!.bondStatus === 'ACTIVE' && daysUntilExpiration !== null && daysUntilExpiration <= 90) {
+          <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+              <h5 class="card-title mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Expiration Alert
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-2">
+                This bond expires in
+                <strong class="text-danger">{{ daysUntilExpiration }} days</strong>
+              </p>
+              <button class="btn btn-warning btn-sm w-100">
+                <i class="bi bi-arrow-repeat me-1"></i>
+                Process Renewal
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-lightning me-2"></i>
+              Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-primary">
+                <i class="bi bi-printer me-1"></i> Print Bond
+              </button>
+              <button class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-plus me-1"></i> Add Note
+              </button>
+              @if (bond()!.bondStatus === 'ACTIVE') {
+                <button class="btn btn-outline-info">
+                  <i class="bi bi-arrow-up-circle me-1"></i> Increase Penalty
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

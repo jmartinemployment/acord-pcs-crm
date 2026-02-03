@@ -1,0 +1,974 @@
+// ACORD Property & Casualty / Surety CRM - Prisma Schema
+// Based on ACORD P&C/Surety v1.16.0 XSD
+//
+// This schema maps the core ACORD data structures for:
+// - Party management (Persons, Organizations)
+// - Policies (Auto, Property, GL, WC, etc.)
+// - Claims
+// - Vehicles and Properties
+// - Surety Bonds
+// - CRM-specific extensions (Activities, Leads)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS - ACORD P&C Type Codes
+// =============================================================================
+
+enum PartyType {
+  PERSON
+  ORGANIZATION
+}
+
+enum GenderCode {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum AddressType {
+  RESIDENCE
+  BUSINESS
+  MAILING
+  BILLING
+  GARAGING
+  LOSS_LOCATION
+  OTHER
+}
+
+enum PhoneType {
+  HOME
+  BUSINESS
+  MOBILE
+  FAX
+  OTHER
+}
+
+enum EmailType {
+  PERSONAL
+  BUSINESS
+  OTHER
+}
+
+enum LineOfBusiness {
+  AUTOP       // Personal Auto
+  AUTOC       // Commercial Auto
+  HOME        // Homeowners
+  DWELL       // Dwelling Fire
+  CPKGE       // Commercial Package
+  BOP         // Business Owners Policy
+  GL          // General Liability
+  WORK        // Workers Compensation
+  PROP        // Commercial Property
+  CRIME       // Crime/Fidelity
+  IMARINE     // Inland Marine
+  UMBRL       // Umbrella/Excess
+  PROFLIAB    // Professional Liability
+  SURETY      // Surety Bond
+  FARM        // Farm/Ranch
+  FLOOD       // Flood
+  EQKE        // Earthquake
+  OTHER
+}
+
+enum PolicyStatus {
+  PENDING
+  BOUND
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  NON_RENEWED
+  REINSTATED
+}
+
+enum ClaimStatus {
+  OPEN
+  CLOSED
+  REOPENED
+  SUBROGATION
+  LITIGATION
+  DENIED
+}
+
+enum PartyRole {
+  INSURED
+  NAMED_INSURED
+  ADDITIONAL_INSURED
+  DRIVER
+  MORTGAGEE
+  LIENHOLDER
+  LOSS_PAYEE
+  CLAIMANT
+  PRODUCER
+  PRINCIPAL        // Surety
+  OBLIGEE          // Surety
+  INDEMNITOR       // Surety
+  EMPLOYER         // Workers Comp
+  EMPLOYEE         // Workers Comp
+  OTHER
+}
+
+enum BondType {
+  CONTRACT         // Performance, Payment, Bid
+  COMMERCIAL       // License, Permit
+  COURT            // Appeal, Probate
+  FIDELITY         // Employee Dishonesty
+}
+
+enum BondStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  CLAIMED
+}
+
+// CRM-Specific Enums
+enum UserRole {
+  ADMIN
+  AGENT
+  READONLY
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+  FOLLOW_UP
+  QUOTE
+  RENEWAL
+  CLAIM_FOLLOWUP
+  POLICY_REVIEW
+  OTHER
+}
+
+enum ActivityStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DEFERRED
+}
+
+enum LeadSource {
+  REFERRAL
+  WEB_INQUIRY
+  COLD_CALL
+  WALK_IN
+  SEMINAR
+  DIRECT_MAIL
+  SOCIAL_MEDIA
+  EXISTING_CLIENT
+  PURCHASED_LIST
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  QUOTED
+  WON
+  LOST
+  DORMANT
+}
+
+// =============================================================================
+// PARTY MODELS - Core entity for all people and organizations
+// =============================================================================
+
+/// Party - The central entity representing any person or organization
+model Party {
+  id                String      @id @default(cuid())
+  partyType         PartyType   @default(PERSON)
+
+  // Person fields
+  firstName         String?
+  middleName        String?
+  lastName          String?
+  prefix            String?     // Mr., Mrs., Dr.
+  suffix            String?     // Jr., Sr., III
+  dateOfBirth       DateTime?   @db.Date
+  gender            GenderCode?
+
+  // Organization fields
+  commercialName    String?
+  dba               String?     // Doing Business As
+  legalEntityType   String?     // LLC, Corp, Partnership
+
+  // Common fields
+  fullName          String?     // Computed or stored
+  taxIdType         String?     // SSN, FEIN
+  taxId             String?
+
+  // Contact info
+  addresses         Address[]
+  phones            Phone[]
+  emails            Email[]
+
+  // Relationships
+  policyParties     PolicyParty[]
+  claimParties      ClaimParty[]
+  vehicleDrivers    VehicleDriver[]
+  bondParties       BondParty[]
+  activities        Activity[]
+  attachments       Attachment[]
+  leads             Lead[]
+
+  // Metadata
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  isActive          Boolean     @default(true)
+
+  @@index([partyType])
+  @@index([fullName])
+  @@index([taxId])
+  @@index([lastName, firstName])
+}
+
+/// Address - Physical/mailing addresses
+model Address {
+  id                String      @id @default(cuid())
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  addressType       AddressType @default(RESIDENCE)
+
+  line1             String?
+  line2             String?
+  city              String?
+  stateProvince     String?     // State/Province code
+  postalCode        String?
+  county            String?
+  country           String?     @default("US")
+
+  isPrimary         Boolean     @default(false)
+  isValid           Boolean     @default(true)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([partyId])
+  @@index([stateProvince, city])
+}
+
+/// Phone - Phone numbers
+model Phone {
+  id                String      @id @default(cuid())
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  phoneType         PhoneType   @default(HOME)
+  phoneNumber       String
+  extension         String?
+
+  isPrimary         Boolean     @default(false)
+  isValid           Boolean     @default(true)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([partyId])
+}
+
+/// Email - Email addresses
+model Email {
+  id                String      @id @default(cuid())
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  emailType         EmailType   @default(PERSONAL)
+  emailAddress      String
+
+  isPrimary         Boolean     @default(false)
+  isValid           Boolean     @default(true)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([partyId])
+  @@index([emailAddress])
+}
+
+// =============================================================================
+// POLICY MODELS
+// =============================================================================
+
+/// Policy - Insurance policy
+model Policy {
+  id                String          @id @default(cuid())
+  policyNumber      String          @unique
+  lineOfBusiness    LineOfBusiness
+
+  effectiveDate     DateTime        @db.Date
+  expirationDate    DateTime        @db.Date
+  policyStatus      PolicyStatus    @default(PENDING)
+
+  writtenPremium    Decimal?        @db.Decimal(12, 2)
+  annualPremium     Decimal?        @db.Decimal(12, 2)
+  policyLimit       Decimal?        @db.Decimal(15, 2)
+
+  // Carrier info
+  carrierCode       String?
+  carrierName       String?
+
+  // Producer/Agency
+  producerId        String?
+  producerName      String?
+  agencyCode        String?
+  agencyName        String?
+
+  // Billing
+  paymentPlan       String?
+  billingType       String?         // Direct, Agency
+
+  // Related entities
+  parties           PolicyParty[]
+  vehicles          Vehicle[]
+  properties        Property[]
+  coverages         Coverage[]
+  claims            Claim[]
+  attachments       Attachment[]
+  activities        Activity[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([policyStatus])
+  @@index([lineOfBusiness])
+  @@index([effectiveDate])
+  @@index([expirationDate])
+  @@index([carrierCode])
+}
+
+/// PolicyParty - Junction table linking parties to policies with roles
+model PolicyParty {
+  id                String      @id @default(cuid())
+
+  policy            Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policyId          String
+
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  role              PartyRole   @default(INSURED)
+  isPrimaryInsured  Boolean     @default(false)
+
+  // For additional insureds
+  interestDesc      String?     // Description of insurable interest
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([policyId, partyId, role])
+  @@index([policyId])
+  @@index([partyId])
+}
+
+// =============================================================================
+// COVERAGE MODELS
+// =============================================================================
+
+/// Coverage - Policy coverages
+model Coverage {
+  id                String      @id @default(cuid())
+
+  policy            Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policyId          String
+
+  coverageCode      String      // BIPD, COMP, COLL, BLDG, BPP, etc.
+  coverageDesc      String?
+
+  limitAmount       Decimal?    @db.Decimal(15, 2)
+  deductibleAmount  Decimal?    @db.Decimal(12, 2)
+  premiumAmount     Decimal?    @db.Decimal(12, 2)
+
+  limitType         String?     // PerOccurrence, PerPerson, Aggregate
+  deductibleType    String?     // Flat, Percentage
+
+  // For vehicle/property specific coverages
+  vehicleId         String?
+  propertyId        String?
+
+  effectiveDate     DateTime?   @db.Date
+  expirationDate    DateTime?   @db.Date
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([policyId])
+  @@index([coverageCode])
+}
+
+// =============================================================================
+// VEHICLE MODELS (Auto Lines)
+// =============================================================================
+
+/// Vehicle - Vehicles on auto policies
+model Vehicle {
+  id                String      @id @default(cuid())
+
+  policy            Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policyId          String
+
+  vehicleNumber     Int?        // Vehicle number on policy
+
+  vin               String?
+  year              Int?
+  make              String?
+  model             String?
+  bodyType          String?     // Sedan, SUV, Pickup, etc.
+  vehicleType       String?     // PPT (Private Passenger), COM (Commercial)
+  vehicleUse        String?     // Pleasure, Commute, Business, Farm
+
+  // Garaging location
+  garagingAddress   String?
+  garagingCity      String?
+  garagingState     String?
+  garagingZip       String?
+
+  // Value
+  statedAmount      Decimal?    @db.Decimal(12, 2)
+  costNew           Decimal?    @db.Decimal(12, 2)
+
+  // Status
+  isActive          Boolean     @default(true)
+
+  // Related
+  drivers           VehicleDriver[]
+  additionalInterests VehicleAdditionalInterest[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([policyId])
+  @@index([vin])
+}
+
+/// VehicleDriver - Links drivers to vehicles
+model VehicleDriver {
+  id                String      @id @default(cuid())
+
+  vehicle           Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId         String
+
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  isPrimaryDriver   Boolean     @default(false)
+  driverStatus      String?     // Rated, Excluded, Occasional
+
+  // License info
+  licenseNumber     String?
+  licenseState      String?
+  licenseStatus     String?     // Valid, Suspended, Revoked
+
+  // Driving record
+  yearsLicensed     Int?
+  accidentsCount    Int?        @default(0)
+  violationsCount   Int?        @default(0)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([vehicleId, partyId])
+  @@index([vehicleId])
+  @@index([partyId])
+}
+
+/// VehicleAdditionalInterest - Lienholders on vehicles
+model VehicleAdditionalInterest {
+  id                String      @id @default(cuid())
+
+  vehicle           Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId         String
+
+  interestType      String      // Lienholder, LossPay
+  name              String
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+
+  loanNumber        String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([vehicleId])
+}
+
+// =============================================================================
+// PROPERTY MODELS (Property Lines)
+// =============================================================================
+
+/// Property - Locations/buildings on property policies
+model Property {
+  id                String      @id @default(cuid())
+
+  policy            Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policyId          String
+
+  locationNumber    Int?
+  buildingNumber    Int?
+
+  propertyType      String?     // Building, Contents, BPP
+  occupancyType     String?     // Owner, Tenant, Vacant
+
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+  county            String?
+
+  // Construction
+  constructionType  String?     // Frame, Masonry, Fire Resistive
+  roofType          String?
+  yearBuilt         Int?
+  squareFootage     Int?
+  numberOfStories   Int?
+  numberOfUnits     Int?
+
+  // Protection
+  protectionClass   String?
+  distanceToFireStation Decimal? @db.Decimal(5, 2)
+  distanceToHydrant Decimal?    @db.Decimal(5, 2)
+  sprinklered       Boolean?    @default(false)
+  alarmType         String?
+
+  // Values
+  buildingValue     Decimal?    @db.Decimal(15, 2)
+  contentsValue     Decimal?    @db.Decimal(15, 2)
+  businessIncomeValue Decimal?  @db.Decimal(15, 2)
+
+  // Status
+  isActive          Boolean     @default(true)
+
+  // Related
+  additionalInterests PropertyAdditionalInterest[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([policyId])
+  @@index([state, city])
+}
+
+/// PropertyAdditionalInterest - Mortgagees on properties
+model PropertyAdditionalInterest {
+  id                String      @id @default(cuid())
+
+  property          Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId        String
+
+  interestType      String      // Mortgagee, LossPay, ContractOfSale
+  rank              Int?        // 1st, 2nd mortgagee
+  name              String
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+
+  loanNumber        String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([propertyId])
+}
+
+// =============================================================================
+// CLAIMS MODELS
+// =============================================================================
+
+/// Claim - Insurance claims
+model Claim {
+  id                String        @id @default(cuid())
+  claimNumber       String        @unique
+
+  policy            Policy        @relation(fields: [policyId], references: [id])
+  policyId          String
+
+  // Loss info
+  lossDate          DateTime      @db.Date
+  lossTime          String?
+  reportedDate      DateTime      @default(now())
+  lossCauseCode     String?
+  lossDescription   String?       @db.Text
+
+  // Location of loss
+  lossAddress       String?
+  lossCity          String?
+  lossState         String?
+  lossZip           String?
+
+  // Status
+  claimStatus       ClaimStatus   @default(OPEN)
+  closedDate        DateTime?     @db.Date
+  closedReason      String?
+
+  // Financials
+  totalIncurred     Decimal?      @db.Decimal(15, 2)
+  totalPaid         Decimal?      @db.Decimal(15, 2)
+  totalReserve      Decimal?      @db.Decimal(15, 2)
+
+  // Adjuster
+  adjusterName      String?
+  adjusterPhone     String?
+  adjusterEmail     String?
+
+  // Related
+  parties           ClaimParty[]
+  payments          ClaimPayment[]
+  attachments       Attachment[]
+  activities        Activity[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([policyId])
+  @@index([claimStatus])
+  @@index([lossDate])
+}
+
+/// ClaimParty - Parties involved in claims
+model ClaimParty {
+  id                String      @id @default(cuid())
+
+  claim             Claim       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId           String
+
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  role              PartyRole   @default(CLAIMANT)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([claimId, partyId, role])
+  @@index([claimId])
+  @@index([partyId])
+}
+
+/// ClaimPayment - Payments made on claims
+model ClaimPayment {
+  id                String      @id @default(cuid())
+
+  claim             Claim       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId           String
+
+  paymentDate       DateTime    @db.Date
+  paymentAmount     Decimal     @db.Decimal(15, 2)
+  paymentType       String?     // Indemnity, Expense, Subrogation Recovery
+
+  payeeName         String?
+  payeeType         String?     // Insured, Claimant, Vendor
+  checkNumber       String?
+
+  memo              String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([claimId])
+  @@index([paymentDate])
+}
+
+// =============================================================================
+// SURETY BOND MODELS
+// =============================================================================
+
+/// SuretyBond - Surety bonds
+model SuretyBond {
+  id                String      @id @default(cuid())
+  bondNumber        String      @unique
+
+  bondType          BondType
+  bondSubType       String?     // Specific: Bid, Performance, Payment, License, etc.
+
+  penaltyAmount     Decimal     @db.Decimal(15, 2)
+  bondAmount        Decimal?    @db.Decimal(15, 2)
+  premiumAmount     Decimal?    @db.Decimal(12, 2)
+
+  effectiveDate     DateTime    @db.Date
+  expirationDate    DateTime?   @db.Date
+  bondStatus        BondStatus  @default(ACTIVE)
+
+  // Surety carrier
+  suretyCarrier     String?
+  suretyCarrierCode String?
+
+  // Underlying contract (for contract bonds)
+  contractDescription String?
+  contractAmount    Decimal?    @db.Decimal(15, 2)
+  projectName       String?
+  projectAddress    String?
+  projectCity       String?
+  projectState      String?
+
+  // Related
+  parties           BondParty[]
+  attachments       Attachment[]
+  activities        Activity[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([bondType])
+  @@index([bondStatus])
+  @@index([effectiveDate])
+}
+
+/// BondParty - Parties on surety bonds (Principal, Obligee, Indemnitor)
+model BondParty {
+  id                String      @id @default(cuid())
+
+  bond              SuretyBond  @relation(fields: [bondId], references: [id], onDelete: Cascade)
+  bondId            String
+
+  party             Party       @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId           String
+
+  role              PartyRole   // PRINCIPAL, OBLIGEE, INDEMNITOR
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([bondId, partyId, role])
+  @@index([bondId])
+  @@index([partyId])
+}
+
+// =============================================================================
+// CRM-SPECIFIC MODELS
+// =============================================================================
+
+/// Activity - CRM activities, tasks, and interactions
+model Activity {
+  id                String          @id @default(cuid())
+
+  activityType      ActivityType    @default(NOTE)
+  activityStatus    ActivityStatus  @default(PENDING)
+
+  subject           String?
+  description       String?         @db.Text
+
+  // Scheduling
+  dueDate           DateTime?       @db.Date
+  dueTime           String?
+  completedDate     DateTime?       @db.Date
+
+  // Assignment
+  assignedTo        String?
+  createdBy         String?
+
+  priority          Int?            @default(3) // 1=High, 2=Medium, 3=Low
+
+  // Related entities (can be linked to multiple)
+  party             Party?          @relation(fields: [partyId], references: [id])
+  partyId           String?
+
+  policy            Policy?         @relation(fields: [policyId], references: [id])
+  policyId          String?
+
+  claim             Claim?          @relation(fields: [claimId], references: [id])
+  claimId           String?
+
+  bond              SuretyBond?     @relation(fields: [bondId], references: [id])
+  bondId            String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([partyId])
+  @@index([policyId])
+  @@index([claimId])
+  @@index([bondId])
+  @@index([activityType])
+  @@index([activityStatus])
+  @@index([dueDate])
+  @@index([assignedTo])
+}
+
+/// Lead - Sales leads/prospects
+model Lead {
+  id                String      @id @default(cuid())
+
+  // Can be linked to existing party or standalone
+  party             Party?      @relation(fields: [partyId], references: [id])
+  partyId           String?
+
+  // If not linked to party
+  firstName         String?
+  lastName          String?
+  companyName       String?
+  email             String?
+  phone             String?
+
+  leadSource        LeadSource?
+  leadStatus        LeadStatus  @default(NEW)
+
+  // Interested lines
+  interestedLines   String[]    // Array of LOB codes
+
+  // Dates
+  leadDate          DateTime    @default(now())
+  contactedDate     DateTime?
+  quotedDate        DateTime?
+  convertedDate     DateTime?
+
+  // Assignment
+  assignedTo        String?
+
+  notes             String?     @db.Text
+  estimatedPremium  Decimal?    @db.Decimal(12, 2)
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([leadStatus])
+  @@index([leadSource])
+  @@index([assignedTo])
+}
+
+/// Attachment - Documents and files
+model Attachment {
+  id                String      @id @default(cuid())
+
+  // Can be attached to various entities
+  party             Party?      @relation(fields: [partyId], references: [id])
+  partyId           String?
+
+  policy            Policy?     @relation(fields: [policyId], references: [id])
+  policyId          String?
+
+  claim             Claim?      @relation(fields: [claimId], references: [id])
+  claimId           String?
+
+  bond              SuretyBond? @relation(fields: [bondId], references: [id])
+  bondId            String?
+
+  attachmentType    String?     // Application, Dec Page, Endorsement, Photos, etc.
+  fileName          String
+  originalName      String?
+  mimeType          String?
+  fileSize          Int?
+  storageUrl        String
+
+  description       String?
+
+  uploadedBy        String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([partyId])
+  @@index([policyId])
+  @@index([claimId])
+  @@index([bondId])
+}
+
+// =============================================================================
+// USER AUTHENTICATION MODELS
+// =============================================================================
+
+/// User - CRM users
+model User {
+  id                String      @id @default(cuid())
+
+  email             String      @unique
+  passwordHash      String
+
+  firstName         String
+  lastName          String
+  displayName       String?
+
+  role              UserRole    @default(AGENT)
+
+  isActive          Boolean     @default(true)
+  isVerified        Boolean     @default(false)
+
+  refreshTokens     RefreshToken[]
+
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
+  lastLoginAt       DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil       DateTime?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+/// RefreshToken - JWT refresh tokens
+model RefreshToken {
+  id                String      @id @default(cuid())
+
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+
+  token             String      @unique
+  expiresAt         DateTime
+
+  userAgent         String?
+  ipAddress         String?
+
+  isRevoked         Boolean     @default(false)
+  revokedAt         DateTime?
+
+  createdAt         DateTime    @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// =============================================================================
+// AUDIT & EXTENSIBILITY MODELS
+// =============================================================================
+
+/// AuditLog - Track changes
+model AuditLog {
+  id                String      @id @default(cuid())
+
+  entityType        String      // Party, Policy, Claim, etc.
+  entityId          String
+  action            String      // CREATE, UPDATE, DELETE
+
+  userId            String?
+  userName          String?
+
+  oldValues         Json?
+  newValues         Json?
+
+  createdAt         DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+/// SystemConfig - Application configuration
+model SystemConfig {
+  id                String      @id @default(cuid())
+
+  key               String      @unique
+  value             String
+  description       String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}

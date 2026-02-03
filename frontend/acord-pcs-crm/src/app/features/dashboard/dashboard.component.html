@@ -1,0 +1,263 @@
+<app-navbar title="Dashboard" subtitle="Overview"></app-navbar>
+
+<div class="p-4">
+  @if (loading()) {
+    <app-loading message="Loading dashboard..."></app-loading>
+  } @else if (data()) {
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-6 col-lg-3">
+        <app-stats-card
+          label="Active Policies"
+          [value]="data()!.stats.activePolicies"
+          icon="bi-file-earmark-text"
+          bgColor="#e3f2fd"
+          iconColor="#1976d2"
+        ></app-stats-card>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <app-stats-card
+          label="Total Premium"
+          [value]="data()!.stats.totalPremium"
+          icon="bi-currency-dollar"
+          bgColor="#e8f5e9"
+          iconColor="#388e3c"
+          [isCurrency]="true"
+        ></app-stats-card>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <app-stats-card
+          label="Open Claims"
+          [value]="data()!.stats.openClaims"
+          icon="bi-exclamation-triangle"
+          bgColor="#fff3e0"
+          iconColor="#f57c00"
+        ></app-stats-card>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <app-stats-card
+          label="Active Leads"
+          [value]="data()!.stats.activeLeads"
+          icon="bi-funnel"
+          bgColor="#f3e5f5"
+          iconColor="#7b1fa2"
+        ></app-stats-card>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Renewals Pipeline -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-calendar-event me-2 text-primary"></i>Renewal Pipeline</h5>
+            <a routerLink="/policies" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body">
+            <div class="row text-center mb-4">
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1 text-danger">{{ data()!.renewals.expiring30Days }}</h3>
+                  <small class="text-muted">Next 30 Days</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1 text-warning">{{ data()!.renewals.expiring60Days }}</h3>
+                  <small class="text-muted">31-60 Days</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1 text-info">{{ data()!.renewals.expiring90Days }}</h3>
+                  <small class="text-muted">61-90 Days</small>
+                </div>
+              </div>
+            </div>
+            @if (data()!.renewals.policies.length) {
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Policy</th>
+                      <th>Insured</th>
+                      <th>Expires</th>
+                      <th class="text-end">Premium</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (policy of data()!.renewals.policies.slice(0, 5); track policy.id) {
+                      <tr>
+                        <td>
+                          <a [routerLink]="['/policies', policy.id]" class="text-decoration-none">
+                            {{ policy.policyNumber }}
+                          </a>
+                        </td>
+                        <td>{{ policy.parties?.[0]?.party?.fullName || '-' }}</td>
+                        <td>{{ policy.expirationDate | date:'shortDate' }}</td>
+                        <td class="text-end">{{ policy.annualPremium | currency }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-muted text-center mb-0">No policies expiring in the next 90 days</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Claims Summary -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Claims Overview</h5>
+            <a routerLink="/claims" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body">
+            <div class="row text-center mb-4">
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1">{{ data()!.claims.openClaims }}</h3>
+                  <small class="text-muted">Open</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1">{{ data()!.claims.totalReserves | currency:'USD':'symbol':'1.0-0' }}</h3>
+                  <small class="text-muted">Reserves</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border rounded p-3">
+                  <h3 class="mb-1">{{ data()!.claims.totalPaid | currency:'USD':'symbol':'1.0-0' }}</h3>
+                  <small class="text-muted">Paid</small>
+                </div>
+              </div>
+            </div>
+            @if (data()!.claims.byStatus.length) {
+              <div class="mb-0">
+                @for (status of data()!.claims.byStatus; track status.status) {
+                  <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span>
+                      <span class="badge me-2" [class]="getStatusBadgeClass(status.status)">{{ status.status }}</span>
+                    </span>
+                    <strong>{{ status.count }}</strong>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-check2-square me-2 text-success"></i>Tasks</h5>
+            <a routerLink="/activities" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body">
+            <div class="d-flex flex-column gap-3">
+              <div class="d-flex justify-content-between align-items-center p-3 bg-danger bg-opacity-10 rounded">
+                <span><i class="bi bi-exclamation-circle text-danger me-2"></i>Overdue</span>
+                <span class="badge bg-danger fs-6">{{ data()!.tasks.overdue }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center p-3 bg-warning bg-opacity-10 rounded">
+                <span><i class="bi bi-clock text-warning me-2"></i>Due Today</span>
+                <span class="badge bg-warning fs-6">{{ data()!.tasks.dueToday }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center p-3 bg-info bg-opacity-10 rounded">
+                <span><i class="bi bi-calendar text-info me-2"></i>Upcoming</span>
+                <span class="badge bg-info fs-6">{{ data()!.tasks.upcoming }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center p-3 bg-success bg-opacity-10 rounded">
+                <span><i class="bi bi-check-circle text-success me-2"></i>Completed</span>
+                <span class="badge bg-success fs-6">{{ data()!.tasks.completed }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lead Pipeline -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-funnel me-2 text-purple"></i>Lead Pipeline</h5>
+            <a routerLink="/leads" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <small class="text-muted">Estimated Pipeline Value</small>
+              <h3 class="mb-0">{{ data()!.leads.estimatedPremium | currency }}</h3>
+            </div>
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex align-items-center">
+                <span class="badge bg-secondary me-2 stage-badge">New</span>
+                <div class="progress flex-grow-1 stage-progress">
+                  <div class="progress-bar bg-secondary" [style.width.%]="getLeadPercent('new')">{{ data()!.leads.new }}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <span class="badge bg-info me-2 stage-badge">Contacted</span>
+                <div class="progress flex-grow-1 stage-progress">
+                  <div class="progress-bar bg-info" [style.width.%]="getLeadPercent('contacted')">{{ data()!.leads.contacted }}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <span class="badge bg-primary me-2 stage-badge">Qualified</span>
+                <div class="progress flex-grow-1 stage-progress">
+                  <div class="progress-bar bg-primary" [style.width.%]="getLeadPercent('qualified')">{{ data()!.leads.qualified }}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <span class="badge bg-warning me-2 stage-badge">Quoted</span>
+                <div class="progress flex-grow-1 stage-progress">
+                  <div class="progress-bar bg-warning" [style.width.%]="getLeadPercent('quoted')">{{ data()!.leads.quoted }}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <span class="badge bg-success me-2 stage-badge">Won</span>
+                <div class="progress flex-grow-1 stage-progress">
+                  <div class="progress-bar bg-success" [style.width.%]="getLeadPercent('won')">{{ data()!.leads.won }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0">
+            <h5 class="mb-0"><i class="bi bi-activity me-2 text-info"></i>Recent Activity</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              @for (activity of data()!.recentActivity.slice(0, 6); track activity.id) {
+                <div class="list-group-item border-0">
+                  <div class="d-flex w-100 justify-content-between">
+                    <small class="text-muted">
+                      <i class="bi" [class]="getActivityIcon(activity.activityType)"></i>
+                      {{ activity.activityType }}
+                    </small>
+                    <small class="text-muted">{{ activity.createdAt | date:'short' }}</small>
+                  </div>
+                  <p class="mb-1 small">{{ activity.subject }}</p>
+                </div>
+              } @empty {
+                <div class="list-group-item border-0 text-center text-muted">
+                  No recent activity
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,30 @@
+<div class="card h-100 border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex align-items-center">
+      <div class="flex-shrink-0">
+        <div
+          class="icon-box rounded d-flex align-items-center justify-content-center"
+          [style.background-color]="bgColor"
+        >
+          <i class="bi {{ icon }} fs-4" [style.color]="iconColor"></i>
+        </div>
+      </div>
+      <div class="flex-grow-1 ms-3">
+        <p class="text-muted small mb-1">{{ label }}</p>
+        <h3 class="mb-0 fw-bold">
+          @if (isCurrency) {
+            {{ value | currency:'USD':'symbol':'1.0-0' }}
+          } @else {
+            {{ value | number }}
+          }
+        </h3>
+        @if (change !== undefined) {
+          <small [class]="change >= 0 ? 'text-success' : 'text-danger'">
+            <i class="bi" [class.bi-arrow-up]="change >= 0" [class.bi-arrow-down]="change < 0"></i>
+            {{ change }}% from last month
+          </small>
+        }
+      </div>
+    </div>
+  </div>
+</div>

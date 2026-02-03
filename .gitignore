@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+frontend/*/node_modules/
+
+# Build output
+dist/
+frontend/*/dist/
+frontend/*/.angular/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+
+# Temporary files
+*.tmp
+*.temp

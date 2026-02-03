@@ -1,0 +1,54 @@
+<app-navbar title="Parties" subtitle="Manage customers and organizations">
+  <a routerLink="/parties/new" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Add Party
+  </a>
+</app-navbar>
+
+<div class="container-fluid px-4">
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by name or email..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select
+            class="form-select"
+            [ngModel]="filterType()"
+            (ngModelChange)="filterType.set($event)">
+            <option value="">All Types</option>
+            <option value="PERSON">Person</option>
+            <option value="ORGANIZATION">Organization</option>
+          </select>
+        </div>
+        <div class="col-md-3 text-end">
+          <span class="text-muted">
+            {{ filteredParties.length }} parties
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="card">
+    <div class="card-body p-0">
+      <app-data-table
+        [columns]="columns"
+        [data]="filteredParties"
+        [loading]="loading()"
+        emptyMessage="No parties found" />
+    </div>
+  </div>
+</div>
