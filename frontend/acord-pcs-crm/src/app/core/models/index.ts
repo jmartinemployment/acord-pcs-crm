@@ -243,16 +243,59 @@ export interface Activity {
   updatedAt: string;
 }
 
-// Dashboard
+// Dashboard - matches actual API response
 export interface DashboardOverview {
-  stats: DashboardStats;
-  renewals: RenewalPipeline;
-  claims: ClaimsSummary;
-  tasks: TaskSummary;
-  leads: LeadPipeline;
-  recentActivity: Activity[];
+  stats: {
+    parties: { total: number };
+    policies: { total: number; active: number; upcomingRenewals: number };
+    claims: { open: number };
+    bonds: { total: number; active: number };
+    leads: { new: number };
+    activities: { overdue: number; recentCount: number };
+  };
+  renewals: {
+    thisWeek: RenewalPolicy[];
+    thisMonth: RenewalPolicy[];
+    nextMonth: RenewalPolicy[];
+    later: RenewalPolicy[];
+  };
+  claims: {
+    byStatus: { status: string; count: number; totalIncurred: number }[];
+    byLineOfBusiness: { lineOfBusiness: string; count: number }[];
+    recentClaims: any[];
+  };
+  tasks: {
+    overdue: number;
+    dueToday: number;
+    upcoming: any[];
+    byType: { type: string; count: number }[];
+  };
+  leads: {
+    byStatus: { status: string; count: number; estimatedPremium: number }[];
+    bySource: { source: string; count: number }[];
+  };
+  recentActivity: AuditLogEntry[];
 }
 
+export interface RenewalPolicy {
+  id: string;
+  policyNumber: string;
+  lineOfBusiness: string;
+  expirationDate: string;
+  annualPremium: number;
+  parties?: { party: { id: string; fullName: string } }[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: string;
+  userName: string;
+  createdAt: string;
+}
+
+// Legacy interfaces kept for other components
 export interface DashboardStats {
   totalPolicies: number;
   activePolicies: number;
