@@ -1,4 +1,5 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, of, map } from 'rxjs';
@@ -15,8 +16,10 @@ const USER_KEY = 'currentUser';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
   private baseUrl = environment.apiUrl;
 
+  private isBrowser = isPlatformBrowser(this.platformId);
   private currentUserSignal = signal<User | null>(this.loadUser());
 
   currentUser = this.currentUserSignal.asReadonly();
@@ -25,6 +28,7 @@ export class AuthService {
   isReadonly = computed(() => this.currentUserSignal()?.role === 'READONLY');
 
   private loadUser(): User | null {
+    if (!this.isBrowser) return null;
     const userJson = localStorage.getItem(USER_KEY);
     return userJson ? JSON.parse(userJson) : null;
   }
@@ -49,25 +53,31 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    if (this.isBrowser) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
     this.currentUserSignal.set(null);
     this.router.navigate(['/login']);
   }
 
   private setSession(authResult: LoginResponse): void {
-    localStorage.setItem(TOKEN_KEY, authResult.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, authResult.refreshToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(authResult.user));
+    if (this.isBrowser) {
+      localStorage.setItem(TOKEN_KEY, authResult.accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, authResult.refreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(authResult.user));
+    }
     this.currentUserSignal.set(authResult.user);
   }
 
   getToken(): string | null {
+    if (!this.isBrowser) return null;
     return localStorage.getItem(TOKEN_KEY);
   }
 
   refreshToken(): Observable<LoginResponse | null> {
+    if (!this.isBrowser) return of(null);
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
       return of(null);

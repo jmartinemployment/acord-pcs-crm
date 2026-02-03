@@ -29,7 +29,7 @@ export class ActivityListComponent implements OnInit {
     this.loading.set(true);
     this.activityService.list().subscribe({
       next: (response: PaginatedResponse<Activity>) => {
-        this.activities.set(response.items);
+        this.activities.set(response?.items || []);
         this.loading.set(false);
       },
       error: () => {
