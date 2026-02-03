@@ -48,13 +48,13 @@ export class DashboardComponent implements OnInit {
     return classes[status] || 'bg-secondary';
   }
 
-  getLeadPercent(stage: string): number {
+  getLeadPercent(status: string): number {
     const data = this.data();
-    if (!data) return 0;
-    const total = data.leads.new + data.leads.contacted + data.leads.qualified + data.leads.quoted + data.leads.won;
+    if (!data || !data.leads.byStatus) return 0;
+    const total = data.leads.byStatus.reduce((sum, s) => sum + s.count, 0);
     if (total === 0) return 0;
-    const value = (data.leads as any)[stage] || 0;
-    return Math.max(10, (value / total) * 100);
+    const found = data.leads.byStatus.find(s => s.status === status);
+    return Math.max(10, ((found?.count || 0) / total) * 100);
   }
 
   getActivityIcon(type: string): string {
