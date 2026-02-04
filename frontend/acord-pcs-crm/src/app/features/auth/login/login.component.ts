@@ -14,8 +14,8 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  email = '';
-  password = '';
+  email = 'admin@acordpcs.com';
+  password = 'Admin123';
   loading = signal(false);
   error = signal('');
   showPassword = signal(false);
