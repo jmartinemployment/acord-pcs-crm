@@ -50,7 +50,7 @@ router.get(
   '/renewals',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const days = parseInt(String(req.query.days) || '90');
+      const days = Number.parseInt(String(req.query.days) || '90', 10);
       const renewals = await dashboardService.getRenewalsPipeline(days);
       sendSuccess(res, renewals);
     } catch (error) {
@@ -103,7 +103,7 @@ router.get(
   '/activity',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(String(req.query.limit) || '20');
+      const limit = Number.parseInt(String(req.query.limit) || '20', 10);
       const activity = await dashboardService.getRecentActivity(limit);
       sendSuccess(res, activity);
     } catch (error) {

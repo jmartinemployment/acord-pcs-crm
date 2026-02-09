@@ -18,7 +18,7 @@ function buildWhereClause(query: VehicleQuery): Prisma.VehicleWhereInput {
   }
 
   if (query.year) {
-    where.year = parseInt(query.year);
+    where.year = Number.parseInt(query.year, 10);
   }
 
   if (query.make) {

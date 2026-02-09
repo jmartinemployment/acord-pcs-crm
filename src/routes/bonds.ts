@@ -30,7 +30,7 @@ router.get(
   '/expiring',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const days = parseInt(String(req.query.days) || '30');
+      const days = Number.parseInt(String(req.query.days) || '30', 10);
       const bonds = await bondService.getExpiringBonds(days);
       sendSuccess(res, bonds);
     } catch (error) {

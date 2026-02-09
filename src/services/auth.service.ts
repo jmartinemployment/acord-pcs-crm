@@ -6,7 +6,7 @@ import { UnauthorizedError, ConflictError, NotFoundError } from '../utils/errors
 import { RegisterInput, LoginInput } from '../models/auth.schema';
 import { JwtPayload } from '../middleware/auth.middleware';
 
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
+const BCRYPT_ROUNDS = Number.parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
 const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
@@ -16,7 +16,7 @@ function parseExpiry(expiry: string): number {
   const match = expiry.match(/^(\d+)([smhd])$/);
   if (!match) return 900; // default 15 minutes
 
-  const value = parseInt(match[1]);
+  const value = Number.parseInt(match[1], 10);
   const unit = match[2];
 
   switch (unit) {

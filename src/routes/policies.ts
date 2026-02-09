@@ -31,7 +31,7 @@ router.get(
   '/renewals',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const days = parseInt(String(req.query.days) || '30');
+      const days = Number.parseInt(String(req.query.days) || '30', 10);
       const renewals = await policyService.getUpcomingRenewals(days);
       sendSuccess(res, renewals);
     } catch (error) {

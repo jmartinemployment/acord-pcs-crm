@@ -30,7 +30,7 @@ router.get(
   '/upcoming',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const days = parseInt(String(req.query.days) || '7');
+      const days = Number.parseInt(String(req.query.days) || '7', 10);
       const activities = await activityService.getUpcomingActivities(
         req.user?.userId,
         days
