@@ -277,8 +277,9 @@ export async function forgotPassword(email: string) {
     },
   });
 
-  // TODO: Send email with reset link
-  return token; // In production, don't return this - send email instead
+  // Email delivery requires RESEND_API_KEY env var (not yet configured on Render)
+  // Once configured, send reset link via email and stop returning the token
+  return token;
 }
 
 export async function resetPassword(token: string, newPassword: string) {
