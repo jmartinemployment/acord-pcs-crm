@@ -45,7 +45,7 @@ export async function authenticate(
       select: { id: true, email: true, role: true, isActive: true },
     });
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       throw new UnauthorizedError('User not found or inactive');
     }
 

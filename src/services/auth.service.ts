@@ -13,7 +13,7 @@ const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
 const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
 
 function parseExpiry(expiry: string): number {
-  const match = expiry.match(/^(\d+)([smhd])$/);
+  const match = /^(\d+)([smhd])$/.exec(expiry);
   if (!match) return 900; // default 15 minutes
 
   const value = Number.parseInt(match[1], 10);

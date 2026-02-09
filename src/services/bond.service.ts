@@ -137,7 +137,7 @@ export async function createBond(data: CreateBondInput, createdBy?: string) {
       parties: data.parties ? {
         create: data.parties.map(p => ({
           partyId: p.partyId,
-          role: p.role as any,
+          role: p.role,
         })),
       } : undefined,
     },
@@ -244,7 +244,7 @@ export async function addBondParty(bondId: string, data: BondPartyInput) {
     data: {
       bondId,
       partyId: data.partyId,
-      role: data.role as any,
+      role: data.role,
     },
     include: {
       party: { select: { id: true, fullName: true } },

@@ -57,8 +57,8 @@ export function getSortParams(
   allowedFields: string[],
   defaultField: string = 'createdAt'
 ): { orderBy: Record<string, 'asc' | 'desc'> } {
-  const sortBy = String(query.sortBy || defaultField);
-  const sortOrder = (query.sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc';
+  const sortBy = typeof query.sortBy === 'string' ? query.sortBy : defaultField;
+  const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
 
   const field = allowedFields.includes(sortBy) ? sortBy : defaultField;
 
