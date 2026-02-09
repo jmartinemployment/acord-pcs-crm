@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import prisma from '../utils/prisma';
 import { UnauthorizedError, ConflictError, NotFoundError } from '../utils/errors';
 import { RegisterInput, LoginInput } from '../models/auth.schema';

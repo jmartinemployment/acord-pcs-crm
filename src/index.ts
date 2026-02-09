@@ -1,7 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
 import prisma from './utils/prisma';
 import { AppError, ValidationError } from './utils/errors';
 
